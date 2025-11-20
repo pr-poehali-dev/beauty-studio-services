@@ -73,7 +73,7 @@ const Index = () => {
     <div className="min-h-screen">
       <nav className="fixed top-0 w-full bg-card/80 backdrop-blur-md z-50 border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-primary">Студия Красоты</h1>
+          <h1 className="text-2xl font-bold text-black">Lash Studio 54</h1>
           <div className="hidden md:flex gap-6">
             <a href="#home" className="hover:text-primary transition-colors">Главная</a>
             <a href="#services" className="hover:text-primary transition-colors">Услуги</a>
