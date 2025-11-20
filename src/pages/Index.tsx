@@ -5,6 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
 
 const services = [
@@ -57,13 +59,19 @@ const masters = [
 const timeSlots = ['10:00', '11:30', '13:00', '14:30', '16:00', '17:30', '19:00'];
 
 const Index = () => {
+  const { toast } = useToast();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [bookingData, setBookingData] = useState({
+    clientName: '',
+    clientPhone: '',
+    clientEmail: '',
     service: '',
     master: '',
     date: undefined as Date | undefined,
     time: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const filteredPortfolio = selectedCategory === 'all' 
     ? portfolio 
@@ -97,17 +105,45 @@ const Index = () => {
                 Опыт работы 6 лет.
               </p>
               <div className="flex gap-4">
-                <Dialog>
+                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                   <DialogTrigger asChild>
                     <Button size="lg" className="animate-scale-in">
                       Записаться онлайн
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-2xl">
+                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle className="text-2xl">Онлайн-запись</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-6 py-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Ваше имя</label>
+                        <Input
+                          placeholder="Введите ваше имя"
+                          value={bookingData.clientName}
+                          onChange={(e) => setBookingData({...bookingData, clientName: e.target.value})}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Телефон</label>
+                        <Input
+                          placeholder="+7 (999) 123-45-67"
+                          value={bookingData.clientPhone}
+                          onChange={(e) => setBookingData({...bookingData, clientPhone: e.target.value})}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Email (необязательно)</label>
+                        <Input
+                          type="email"
+                          placeholder="email@example.com"
+                          value={bookingData.clientEmail}
+                          onChange={(e) => setBookingData({...bookingData, clientEmail: e.target.value})}
+                        />
+                      </div>
+
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Выберите услугу</label>
                         <Select onValueChange={(value) => setBookingData({...bookingData, service: value})}>
@@ -166,8 +202,75 @@ const Index = () => {
                         </div>
                       </div>
 
-                      <Button className="w-full" size="lg">
-                        Подтвердить запись
+                      <Button 
+                        className="w-full" 
+                        size="lg"
+                        disabled={isSubmitting}
+                        onClick={async () => {
+                          if (!bookingData.clientName || !bookingData.clientPhone || !bookingData.service || !bookingData.master || !bookingData.date || !bookingData.time) {
+                            toast({
+                              title: "Ошибка",
+                              description: "Пожалуйста, заполните все обязательные поля",
+                              variant: "destructive"
+                            });
+                            return;
+                          }
+
+                          setIsSubmitting(true);
+
+                          try {
+                            const response = await fetch('https://functions.poehali.dev/f38d8825-bc67-4e4a-a931-f4d979a45c4c', {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json'
+                              },
+                              body: JSON.stringify({
+                                clientName: bookingData.clientName,
+                                clientPhone: bookingData.clientPhone,
+                                clientEmail: bookingData.clientEmail,
+                                service: bookingData.service,
+                                master: bookingData.master,
+                                date: bookingData.date.toISOString().split('T')[0],
+                                time: bookingData.time
+                              })
+                            });
+
+                            const data = await response.json();
+
+                            if (data.success) {
+                              toast({
+                                title: "Успешно!",
+                                description: "Ваша запись создана. Мы свяжемся с вами для подтверждения."
+                              });
+                              setBookingData({
+                                clientName: '',
+                                clientPhone: '',
+                                clientEmail: '',
+                                service: '',
+                                master: '',
+                                date: undefined,
+                                time: ''
+                              });
+                              setDialogOpen(false);
+                            } else {
+                              toast({
+                                title: "Ошибка",
+                                description: "Не удалось создать запись. Попробуйте позже.",
+                                variant: "destructive"
+                              });
+                            }
+                          } catch (error) {
+                            toast({
+                              title: "Ошибка",
+                              description: "Не удалось отправить запрос. Проверьте подключение.",
+                              variant: "destructive"
+                            });
+                          } finally {
+                            setIsSubmitting(false);
+                          }
+                        }}
+                      >
+                        {isSubmitting ? 'Отправка...' : 'Подтвердить запись'}
                       </Button>
                     </div>
                   </DialogContent>

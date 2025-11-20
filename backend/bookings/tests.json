@@ -1,0 +1,29 @@
+{
+  "tests": [
+    {
+      "name": "Create new booking",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "clientName": "Тестовый Клиент",
+        "clientPhone": "+79991234567",
+        "clientEmail": "test@example.com",
+        "service": "Наращивание ресниц",
+        "master": "Анастасия",
+        "date": "2024-12-25",
+        "time": "14:30"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get all bookings",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200
+    }
+  ]
+}
